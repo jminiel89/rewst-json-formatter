@@ -395,7 +395,10 @@
   // ── Error log ──
   let errorLog = JSON.parse(localStorage.getItem('rewst_error_log') || '[]');
 
-  function saveLog() { localStorage.setItem('rewst_error_log', JSON.stringify(errorLog)); }
+  function saveLog() {
+    const safe = errorLog.map(({ snippet, ...rest }) => rest);
+    localStorage.setItem('rewst_error_log', JSON.stringify(safe));
+  }
 
   function updateLogBadge() {
     const n = errorLog.length;
