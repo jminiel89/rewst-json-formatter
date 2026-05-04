@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rewst JSON Formatter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Background + blobs ── */
+    body {
+      background: linear-gradient(135deg, #0c0120 0%, #0d1b3e 50%, #011a2c 100%);
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    body::before,
+    body::after,
+    #blob3 {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(80px);
+      opacity: 0.35;
+    }
+    body::before {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
+      top: -120px; left: -100px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #0891b2 0%, transparent 70%);
+      bottom: -100px; right: -80px;
+    }
+    #blob3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, #4f46e5 0%, transparent 70%);
+      top: 40%; left: 55%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ── Glass mixin (applied as class) ── */
+    .glass {
+      background: rgba(255, 255, 255, 0.055);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    /* ── Z-order: everything above blobs ── */
+    header, .toolbar, .panels, #fixes-list, #error-bar, #log-panel, footer {
+      position: relative; z-index: 1;
+    }
+
+    /* ── Header ── */
+    header {
+      background: rgba(124, 58, 237, 0.18);
+      backdrop-filter: blur(18px) saturate(200%);
+      -webkit-backdrop-filter: blur(18px) saturate(200%);
+      border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.04);
+    }
+    header h1 { font-size: 15px; font-weight: 700; color: #e2d9ff; letter-spacing: 0.3px; }
+
+    .badge { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 600; }
+    .badge-rewst {
+      background: rgba(124, 58, 237, 0.35);
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      color: #c4b5fd;
+    }
+    .badge-ready {
+      background: rgba(6, 182, 212, 0.2);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: #67e8f9;
+      display: none;
+    }
+    .badge-err {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      display: none;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 8px 20px;
+      display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap;
+    }
+
+    /* ── Buttons ── */
+    button {
+      border: none; border-radius: 8px; padding: 6px 16px;
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      transition: all .15s ease; position: relative;
+    }
+    .btn-primary {
+      background: rgba(124, 58, 237, 0.55);
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      color: #ede9fe;
+      box-shadow: 0 0 12px rgba(124, 58, 237, 0.3);
+    }
+    .btn-primary:hover {
+      background: rgba(124, 58, 237, 0.75);
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.13);
+      transform: translateY(-1px);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+      transform: translateY(-1px);
+    }
+    .btn-warn {
+      background: rgba(234, 179, 8, 0.15);
+      border: 1px solid rgba(234, 179, 8, 0.3);
+      color: #fde68a;
+    }
+    .btn-warn:hover {
+      background: rgba(234, 179, 8, 0.28);
+      box-shadow: 0 0 12px rgba(234, 179, 8, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .sep { width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 4px; }
+    .status-msg { margin-left: auto; font-size: 12px; color: #67e8f9; min-width: 180px; text-align: right; }
+    .status-msg.err { color: #fca5a5; }
+
+    /* ── Panels ── */
+    .panels { display: flex; flex: 1; overflow: hidden; gap: 0; }
+
+    .panel {
+      display: flex; flex-direction: column; flex: 1; overflow: hidden;
+      background: rgba(255, 255, 255, 0.035);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-right: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .panel:last-child { border-right: none; }
+
+    .panel-header {
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 7px 16px;
+      font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4);
+      text-transform: uppercase; letter-spacing: 1.2px;
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+    .dot.active { background: #22d3ee; box-shadow: 0 0 6px #22d3ee; }
+    .dot.warn   { background: #fbbf24; box-shadow: 0 0 6px #fbbf24; }
+    .dot.err    { background: #f87171; box-shadow: 0 0 6px #f87171; }
+
+    #input {
+      flex: 1;
+      background: transparent;
+      color: #e2e8f0;
+      border: none; outline: none; resize: none; padding: 16px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px; line-height: 1.6; tab-size: 2; user-select: contain;
+    }
+    #input::placeholder { color: rgba(255,255,255,0.2); }
+
+    #output-wrap {
+      flex: 1; overflow: auto;
+      background: transparent;
+      padding: 16px;
+    }
+    #output {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px; line-height: 1.6;
+      white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;
+    }
+    #plain-output {
+      width: 100%; height: 160px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      resize: vertical;
+      color: #67e8f9;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px; line-height: 1.5; padding: 10px;
+      margin-top: 12px; outline: none;
+    }
+    #plain-output::placeholder { color: rgba(255,255,255,0.15); }
+
+    /* ── Syntax colors ── */
+    .j-brace     { color: #e2e8f0; }
+    .j-bracket   { color: #e2e8f0; }
+    .j-key       { color: #93c5fd; }
+    .j-key-rewst { color: #c084fc; }
+    .j-str       { color: #fca5a5; }
+    .j-jinja     { color: #fde68a; background: rgba(253, 230, 138, 0.08); border-radius: 3px; padding: 0 3px; }
+    .j-num       { color: #86efac; }
+    .j-bool      { color: #60a5fa; }
+    .j-null      { color: #60a5fa; }
+    .j-colon     { color: rgba(255,255,255,0.5); }
+    .j-comma     { color: rgba(255,255,255,0.5); }
+
+    /* ── Fixes bar ── */
+    #fixes-list {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      padding: 4px 16px;
+      background: rgba(255,255,255,0.03);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      min-height: 22px;
+      flex-shrink: 0;
+    }
+
+    /* ── Error bar ── */
+    #error-bar {
+      display: none;
+      background: rgba(239, 68, 68, 0.12);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 8px 16px;
+      font-size: 12px; font-family: monospace;
+      flex-shrink: 0;
+    }
+
+    /* ── Log panel ── */
+    #log-panel {
+      display: none; flex-direction: column;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-top: 1px solid rgba(239, 68, 68, 0.25);
+      max-height: 220px; flex-shrink: 0;
+    }
+    #log-panel.open { display: flex; }
+
+    #log-header {
+      background: rgba(239, 68, 68, 0.1);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 5px 16px;
+      font-size: 11px; font-weight: 700; color: #fca5a5;
+      text-transform: uppercase; letter-spacing: .8px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    #log-header span { margin-left: auto; }
+    #log-header button {
+      font-size: 11px; padding: 2px 8px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      border-radius: 4px;
+    }
+    #log-header button:hover { background: rgba(239, 68, 68, 0.3); }
+
+    #log-body {
+      overflow-y: auto; flex: 1; padding: 8px 16px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 11px; line-height: 1.7;
+    }
+    .log-entry { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
+    .log-entry:last-child { border-bottom: none; }
+    .log-ts   { color: rgba(255,255,255,0.3); margin-right: 8px; }
+    .log-err  { color: #fca5a5; }
+    .log-fix  { color: #67e8f9; font-size: 10px; }
+    .log-snip { color: rgba(255,255,255,0.25); font-size: 10px; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    #log-empty { color: rgba(255,255,255,0.2); font-style: italic; padding: 8px 0; }
+
+    /* ── Footer ── */
+    footer {
+      background: rgba(124, 58, 237, 0.25);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-top: 1px solid rgba(167, 139, 250, 0.2);
+      color: rgba(196, 181, 253, 0.8);
+      font-size: 11px; padding: 4px 16px;
+      display: flex; gap: 16px; align-items: center; flex-shrink: 0;
+    }
+    #char-count { margin-left: auto; }
+
+    #log-count-badge {
+      background: #ef4444;
+      color: #fff; border-radius: 10px;
+      padding: 0 6px; font-size: 10px; font-weight: 700; display: none;
+    }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+  </style>
+</head>
+<body>
+
+<div id="blob3"></div>
+
+<header>
+  <h1>Rewst JSON Formatter</h1>
+  <span class="badge badge-rewst">Rewst Mode</span>
+  <span class="badge badge-ready" id="badge-ready">&#10003; Ready for Rewst</span>
+  <span class="badge badge-err"   id="badge-err">&#10005; Invalid</span>
+</header>
+
+<div class="toolbar">
+  <button class="btn-primary"   onclick="formatJSON()">&#9654; Format for Rewst</button>
+  <button class="btn-secondary" onclick="copyOutput()">&#10040; Copy Output</button>
+  <button class="btn-secondary" onclick="loadTemplate()">&#10753; Load Template</button>
+  <div class="sep"></div>
+  <button class="btn-warn"      onclick="toggleLog()">&#9888; Error Log <span id="log-count-badge">0</span></button>
+  <button class="btn-secondary" onclick="exportLog()">&#8595; Export Log</button>
+  <button class="btn-danger"    onclick="clearAll()">&#10005; Clear</button>
+  <span class="status-msg" id="status"></span>
+</div>
+
+<div class="panels">
+  <div class="panel">
+    <div class="panel-header"><div class="dot active"></div>Raw Input</div>
+    <textarea id="input" placeholder="Paste Rewst task JSON here..." spellcheck="false" oninput="onInput()"></textarea>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><div class="dot" id="output-dot"></div>Formatted Output</div>
+    <div id="output-wrap">
+      <div id="output"></div>
+      <textarea id="plain-output" spellcheck="false" readonly placeholder="Plain JSON appears here — select all and copy to paste into Rewst..."></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="fixes-list"></div>
+<div id="error-bar"></div>
+
+<div id="log-panel">
+  <div id="log-header">
+    &#9888; Error Log
+    <button onclick="clearLog()">Clear Log</button>
+    <span id="log-entry-count">0 entries</span>
+  </div>
+  <div id="log-body"><div id="log-empty">No errors logged.</div></div>
+</div>
+
+<footer>
+  <span>Rewst JSON Formatter</span>
+  <span>Auto-sanitizes comments &middot; Jinja &middot; control chars</span>
+  <span id="char-count">0 chars</span>
+</footer>
+
+<script>
+  const inputEl    = document.getElementById('input');
+  const outputEl   = document.getElementById('output');
+  const plainEl    = document.getElementById('plain-output');
+  const statusEl   = document.getElementById('status');
+  const errorBar   = document.getElementById('error-bar');
+  const outputDot  = document.getElementById('output-dot');
+  const charCount  = document.getElementById('char-count');
+  const fixesList  = document.getElementById('fixes-list');
+  const badgeReady = document.getElementById('badge-ready');
+  const badgeErr   = document.getElementById('badge-err');
+  const logPanel   = document.getElementById('log-panel');
+  const logBody    = document.getElementById('log-body');
+  const logEmpty   = document.getElementById('log-empty');
+  const logCount   = document.getElementById('log-entry-count');
+  const logBadge   = document.getElementById('log-count-badge');
+
+  const REWST_KEYS = new Set([
+    'name','publishResultAs','transitionMode','humanSecondsSaved',
+    'isMocked','mockInput','runAsOrgId','packOverrides','securitySchema',
+    'join','timeout','with','input','output','description'
+  ]);
+
+  // ── Error log ──
+  let errorLog = JSON.parse(localStorage.getItem('rewst_error_log') || '[]');
+
+  function saveLog() { localStorage.setItem('rewst_error_log', JSON.stringify(errorLog)); }
+
+  function updateLogBadge() {
+    const n = errorLog.length;
+    logBadge.textContent = n;
+    logBadge.style.display = n > 0 ? 'inline-block' : 'none';
+    logCount.textContent = n + ' entr' + (n === 1 ? 'y' : 'ies');
+  }
+
+  function renderLog() {
+    if (errorLog.length === 0) {
+      logEmpty.style.display = 'block';
+      logBody.querySelectorAll('.log-entry').forEach(e => e.remove());
+      return;
+    }
+    logEmpty.style.display = 'none';
+    logBody.innerHTML = '';
+    [...errorLog].reverse().forEach(entry => {
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.innerHTML =
+        '<span class="log-ts">' + escHtml(entry.ts) + '</span>' +
+        '<span class="log-err">' + escHtml(entry.error) + '</span>' +
+        (entry.fixes.length ? '<span class="log-fix"> &middot; Fixed: ' + escHtml(entry.fixes.join(', ')) + '</span>' : '') +
+        '<span class="log-snip">' + escHtml(entry.snippet) + '</span>';
+      logBody.appendChild(div);
+    });
+  }
+
+  function logError(error, snippet, fixes) {
+    errorLog.push({ ts: new Date().toLocaleString(), error, snippet: snippet.slice(0, 120).replace(/\n/g, ' '), fixes });
+    if (errorLog.length > 200) errorLog.shift();
+    saveLog(); updateLogBadge();
+    if (logPanel.classList.contains('open')) renderLog();
+  }
+
+  function toggleLog() { logPanel.classList.toggle('open'); if (logPanel.classList.contains('open')) renderLog(); }
+  function clearLog()  { errorLog = []; saveLog(); updateLogBadge(); renderLog(); }
+
+  function exportLog() {
+    if (!errorLog.length) { setStatus('No errors to export', true); return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(errorLog, null, 2)], { type: 'application/json' }));
+    a.download = 'rewst-error-log-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    setStatus('Log exported');
+  }
+
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function setStatus(msg, isErr) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status-msg' + (isErr ? ' err' : '');
+    setTimeout(() => statusEl.textContent = '', 4000);
+  }
+
+  function showReady() {
+    badgeReady.style.display = 'inline-block'; badgeErr.style.display = 'none';
+    outputDot.className = 'dot active'; errorBar.style.display = 'none';
+  }
+
+  function showErr(msg, raw, fixes) {
+    badgeErr.style.display = 'inline-block'; badgeReady.style.display = 'none';
+    outputDot.className = 'dot err'; errorBar.style.display = 'block';
+    errorBar.textContent = 'Error: ' + msg;
+    logError(msg, raw, fixes);
+  }
+
+  function onInput() { charCount.textContent = inputEl.value.length + ' chars'; }
+
+  // ── Character walker — escapes control chars inside JSON string values ──
+  function walkAndEscape(text, flags) {
+    let out = '', inStr = false, i = 0;
+    while (i < text.length) {
+      const ch = text[i], code = text.charCodeAt(i);
+      if (!inStr) {
+        if (ch === '"') inStr = true;
+        out += ch;
+      } else {
+        if (ch === '\\') {
+          out += ch; i++;
+          if (i < text.length) out += text[i];
+        } else if (ch === '"') {
+          inStr = false; out += ch;
+        } else if (ch === '\n') { out += '\\n';  flags.newlines = true;
+        } else if (ch === '\r') { out += '\\r';  flags.newlines = true;
+        } else if (ch === '\t') { out += '\\t';  flags.newlines = true;
+        } else if (code < 0x20) {
+          out += '\\u' + code.toString(16).padStart(4, '0'); flags.ctrl = true;
+        } else { out += ch; }
+      }
+      i++;
+    }
+    return out;
+  }
+
+  // ── Rewst-aware sanitizer ──
+  function rewstSanitize(raw) {
+    const fixes = [];
+    let text = raw;
+
+    // 1. Strip block comments /* ... */
+    let hadBlock = false;
+    text = text.replace(/\/\*[\s\S]*?\*\//g, () => { hadBlock = true; return ''; });
+    if (hadBlock) fixes.push('Stripped block comments');
+
+    // 2. Strip // line comments (full-line only, avoids https://)
+    let hadLine = false;
+    text = text.split('\n').map(line => {
+      if (line.trimStart().startsWith('//')) { hadLine = true; return ''; }
+      return line;
+    }).join('\n');
+    if (hadLine) fixes.push('Stripped line comments');
+
+
+    // 4. Protect Jinja expressions {{ ... }} and {% ... %}
+    const jinjaTokens = [];
+    text = text.replace(/\{[{%][\s\S]*?[%}]\}/g, m => {
+      jinjaTokens.push(m);
+      return '__JINJA_' + (jinjaTokens.length - 1) + '__';
+    });
+
+    // 5. First walk — escape control chars in string values
+    const f1 = { newlines: false, ctrl: false };
+    text = walkAndEscape(text, f1);
+    if (f1.newlines) fixes.push('Fixed literal newlines in strings');
+    if (f1.ctrl)     fixes.push('Escaped control characters');
+
+    // 6. Restore Jinja tokens
+    text = text.replace(/__JINJA_(\d+)__/g, (_, i) => jinjaTokens[parseInt(i)]);
+
+    // 7. Second walk — catches control chars inside restored Jinja expressions
+    const f2 = { newlines: false, ctrl: false };
+    text = walkAndEscape(text, f2);
+    if (f2.newlines) fixes.push('Fixed newlines in Jinja expressions');
+    if (f2.ctrl)     fixes.push('Escaped control chars in Jinja expressions');
+
+    return { result: text, fixes };
+  }
+
+  // ── Syntax highlighter ──
+  function highlight(obj, indent, level) {
+    const pad = ' '.repeat(indent), cur = pad.repeat(level), next = pad.repeat(level + 1);
+    if (obj === null)             return '<span class="j-null">null</span>';
+    if (typeof obj === 'boolean') return '<span class="j-bool">' + obj + '</span>';
+    if (typeof obj === 'number')  return '<span class="j-num">' + obj + '</span>';
+    if (typeof obj === 'string') {
+      const esc = obj.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const withJinja = esc.replace(/\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/g, m => '<span class="j-jinja">' + m + '</span>');
+      return '<span class="j-str">"' + withJinja + '"</span>';
+    }
+    if (Array.isArray(obj)) {
+      if (!obj.length) return '<span class="j-bracket">[]</span>';
+      const items = obj.map(v => next + highlight(v, indent, level + 1)).join('<span class="j-comma">,</span>\n');
+      return '<span class="j-bracket">[</span>\n' + items + '\n' + cur + '<span class="j-bracket">]</span>';
+    }
+    if (typeof obj === 'object') {
+      const keys = Object.keys(obj);
+      if (!keys.length) return '<span class="j-brace">{}</span>';
+      const items = keys.map(k => {
+        const esc = k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const cls = REWST_KEYS.has(k) ? 'j-key-rewst' : 'j-key';
+        return next + '<span class="' + cls + '">"' + esc + '"</span><span class="j-colon">: </span>' + highlight(obj[k], indent, level + 1);
+      }).join('<span class="j-comma">,</span>\n');
+      return '<span class="j-brace">{</span>\n' + items + '\n' + cur + '<span class="j-brace">}</span>';
+    }
+    return String(obj);
+  }
+
+  function formatJSON() {
+    const raw = inputEl.value.trim();
+    if (!raw) { setStatus('Nothing to format', true); return; }
+
+    const { result: sanitized, fixes } = rewstSanitize(raw);
+    fixesList.textContent = fixes.length ? 'Auto-fixed: ' + fixes.join(' · ') : '';
+
+    if (sanitized !== raw) {
+      inputEl.value = sanitized;
+      charCount.textContent = sanitized.length + ' chars';
+    }
+
+    try {
+      const parsed = JSON.parse(sanitized);
+      outputEl.innerHTML = highlight(parsed, 2, 0);
+      outputEl._plain = JSON.stringify(parsed, null, 2);
+      plainEl.value = outputEl._plain;
+      showReady();
+      setStatus(fixes.length ? 'Formatted + ' + fixes.length + ' fix(es)' : 'Ready for Rewst');
+    } catch (e) {
+      showErr(e.message, raw, fixes);
+      setStatus('Cannot fix — check input', true);
+      outputEl.innerHTML = '';
+      outputEl._plain = '';
+    }
+  }
+
+  function copyOutput() {
+    const plain = outputEl._plain;
+    if (!plain) { setStatus('Nothing to copy', true); return; }
+    plainEl.select();
+    navigator.clipboard.writeText(plain)
+      .then(() => setStatus('Copied — paste into Rewst'))
+      .catch(() => {
+        plainEl.select();
+        document.execCommand('copy');
+        setStatus('Copied — paste into Rewst');
+      });
+  }
+
+  function clearAll() {
+    inputEl.value = ''; outputEl.innerHTML = ''; outputEl._plain = '';
+    plainEl.value = '';
+    errorBar.style.display = 'none'; fixesList.textContent = '';
+    charCount.textContent = '0 chars';
+    badgeReady.style.display = 'none'; badgeErr.style.display = 'none';
+    outputDot.className = 'dot'; setStatus('Cleared');
+  }
+
+  function loadTemplate() {
+    fetch('/rewst-http-template.json').then(r => r.text()).then(t => {
+      inputEl.value = t; charCount.textContent = t.length + ' chars';
+      formatJSON(); setStatus('Template loaded');
+    }).catch(() => setStatus('Template not found', true));
+  }
+
+  inputEl.addEventListener('paste', () => setTimeout(() => formatJSON(), 50));
+  inputEl.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); inputEl.select(); }
+  });
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); formatJSON(); }
+  });
+
+  updateLogBadge();
+</script>
+</body>
+</html>
