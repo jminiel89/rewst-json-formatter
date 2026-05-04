@@ -39,12 +39,12 @@ Requires Python 3. No other dependencies, no `pip install`, no Node.js.
 
 **Linux / macOS** — paste into a terminal:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jminiel89/rewst-json-formatter/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jminiel89/jinja-json-formatter/main/install.sh | bash
 ```
 
 **Windows** — paste into PowerShell:
 ```powershell
-irm https://raw.githubusercontent.com/jminiel89/rewst-json-formatter/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/jminiel89/jinja-json-formatter/main/install.ps1 | iex
 ```
 
 Both scripts will:
