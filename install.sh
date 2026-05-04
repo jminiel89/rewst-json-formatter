@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
-set -e
+# -----------------------------------------------------------------------------
+# install.sh — Installer for Rewst JSON Formatter (Linux / macOS)
+#
+# Downloads and sets up the tool in ~/rewst-json-formatter.
+# Re-running this script updates an existing installation.
+#
+# One-liner install:
+#   curl -fsSL https://raw.githubusercontent.com/jminiel89/rewst-json-formatter/main/install.sh | bash
+# -----------------------------------------------------------------------------
+set -e  # Exit immediately if any command fails
 
 REPO="https://github.com/jminiel89/rewst-json-formatter"
 INSTALL_DIR="$HOME/rewst-json-formatter"
@@ -7,7 +16,9 @@ INSTALL_DIR="$HOME/rewst-json-formatter"
 echo "Rewst JSON Formatter — Installer"
 echo "---------------------------------"
 
-# Check Python 3
+# ── Step 1: Verify Python 3 is available ─────────────────────────────────────
+# The tool uses Python's built-in HTTP server to serve the files locally.
+# No pip packages or virtual environments are needed — just Python 3.
 if ! command -v python3 &>/dev/null; then
   echo "Error: python3 not found."
   echo "Install it with your package manager:"
@@ -19,14 +30,21 @@ fi
 PYTHON_VERSION=$(python3 --version 2>&1)
 echo "Found: $PYTHON_VERSION"
 
-# Clone or update
+# ── Step 2: Download or update the tool ──────────────────────────────────────
+# Prefer git clone for a full repo checkout (enables git pull for updates).
+# Fall back to direct curl download if git is not installed.
 if [ -d "$INSTALL_DIR/.git" ]; then
+  # Already installed — pull the latest changes only (fast-forward, no merges)
   echo "Existing install found — updating..."
   git -C "$INSTALL_DIR" pull --ff-only
+
 elif command -v git &>/dev/null; then
+  # Git is available — clone the full repository
   echo "Cloning repo..."
   git clone "$REPO.git" "$INSTALL_DIR"
+
 else
+  # Git not found — download only the required files directly via curl
   echo "git not found — downloading files directly..."
   mkdir -p "$INSTALL_DIR"
   for FILE in index.html rewst-http-template.json start.sh; do
@@ -35,8 +53,10 @@ else
   done
 fi
 
+# ── Step 3: Ensure the start script is executable ────────────────────────────
 chmod +x "$INSTALL_DIR/start.sh"
 
+# ── Done ─────────────────────────────────────────────────────────────────────
 echo ""
 echo "Done. Installed to: $INSTALL_DIR"
 echo ""

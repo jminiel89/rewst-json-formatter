@@ -7,7 +7,11 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Background + blobs ── */
+    /* ── Body & background ──────────────────────────────────────────────────
+       Deep dark gradient base. The three blob pseudo-elements (::before,
+       ::after, and #blob3) create the glowing orb effect behind the glass
+       panels — core of the glassmorphism aesthetic.
+    ──────────────────────────────────────────────────────────────────────── */
     body {
       background: linear-gradient(135deg, #0c0120 0%, #0d1b3e 50%, #011a2c 100%);
       color: #e2e8f0;
@@ -20,6 +24,8 @@
       position: relative;
     }
 
+    /* Three decorative blobs — blurred radial gradients that sit behind
+       all content and create the colored glow visible through glass panels */
     body::before,
     body::after,
     #blob3 {
@@ -32,23 +38,32 @@
       opacity: 0.35;
     }
     body::before {
+      /* Purple blob — top left */
       width: 500px; height: 500px;
       background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
       top: -120px; left: -100px;
     }
     body::after {
+      /* Teal blob — bottom right */
       width: 400px; height: 400px;
       background: radial-gradient(circle, #0891b2 0%, transparent 70%);
       bottom: -100px; right: -80px;
     }
     #blob3 {
+      /* Indigo blob — center, rendered as a real element since CSS only
+         allows ::before and ::after per selector */
       width: 300px; height: 300px;
       background: radial-gradient(circle, #4f46e5 0%, transparent 70%);
       top: 40%; left: 55%;
       transform: translate(-50%, -50%);
     }
 
-    /* ── Glass mixin (applied as class) ── */
+    /* ── Glass effect ───────────────────────────────────────────────────────
+       Shared glass style. backdrop-filter blurs whatever is behind the
+       element (the gradient + blobs), creating the frosted-glass look.
+       Applied directly on header, panels, etc. rather than as a utility
+       class to allow per-element tuning.
+    ──────────────────────────────────────────────────────────────────────── */
     .glass {
       background: rgba(255, 255, 255, 0.055);
       backdrop-filter: blur(18px) saturate(180%);
@@ -56,12 +71,14 @@
       border: 1px solid rgba(255, 255, 255, 0.10);
     }
 
-    /* ── Z-order: everything above blobs ── */
+    /* All interactive chrome sits above the blob layer (z-index: 0) */
     header, .toolbar, .panels, #fixes-list, #error-bar, #log-panel, footer {
       position: relative; z-index: 1;
     }
 
-    /* ── Header ── */
+    /* ── Header ─────────────────────────────────────────────────────────────
+       Purple-tinted glass bar. Contains the app title and status badges.
+    ──────────────────────────────────────────────────────────────────────── */
     header {
       background: rgba(124, 58, 237, 0.18);
       backdrop-filter: blur(18px) saturate(200%);
@@ -73,26 +90,15 @@
     }
     header h1 { font-size: 15px; font-weight: 700; color: #e2d9ff; letter-spacing: 0.3px; }
 
+    /* Status badges — shown/hidden by JS based on parse result */
     .badge { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 600; }
-    .badge-rewst {
-      background: rgba(124, 58, 237, 0.35);
-      border: 1px solid rgba(167, 139, 250, 0.4);
-      color: #c4b5fd;
-    }
-    .badge-ready {
-      background: rgba(6, 182, 212, 0.2);
-      border: 1px solid rgba(6, 182, 212, 0.4);
-      color: #67e8f9;
-      display: none;
-    }
-    .badge-err {
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      color: #fca5a5;
-      display: none;
-    }
+    .badge-rewst  { background: rgba(124, 58, 237, 0.35); border: 1px solid rgba(167, 139, 250, 0.4); color: #c4b5fd; }
+    .badge-ready  { background: rgba(6, 182, 212, 0.2);   border: 1px solid rgba(6, 182, 212, 0.4);   color: #67e8f9; display: none; }
+    .badge-err    { background: rgba(239, 68, 68, 0.2);   border: 1px solid rgba(239, 68, 68, 0.4);   color: #fca5a5; display: none; }
 
-    /* ── Toolbar ── */
+    /* ── Toolbar ────────────────────────────────────────────────────────────
+       Action buttons. Wraps on small screens via flex-wrap.
+    ──────────────────────────────────────────────────────────────────────── */
     .toolbar {
       background: rgba(255, 255, 255, 0.04);
       backdrop-filter: blur(18px);
@@ -102,58 +108,35 @@
       display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap;
     }
 
-    /* ── Buttons ── */
+    /* ── Buttons ────────────────────────────────────────────────────────────
+       Four variants: primary (purple), secondary (neutral), danger (red),
+       warn (amber). Each has a glass background + colored border + glow on hover.
+    ──────────────────────────────────────────────────────────────────────── */
     button {
       border: none; border-radius: 8px; padding: 6px 16px;
       cursor: pointer; font-size: 13px; font-weight: 500;
       transition: all .15s ease; position: relative;
     }
-    .btn-primary {
-      background: rgba(124, 58, 237, 0.55);
-      border: 1px solid rgba(167, 139, 250, 0.4);
-      color: #ede9fe;
-      box-shadow: 0 0 12px rgba(124, 58, 237, 0.3);
-    }
-    .btn-primary:hover {
-      background: rgba(124, 58, 237, 0.75);
-      box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
-      transform: translateY(-1px);
-    }
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #cbd5e1;
-    }
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.13);
-      transform: translateY(-1px);
-    }
-    .btn-danger {
-      background: rgba(239, 68, 68, 0.18);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #fca5a5;
-    }
-    .btn-danger:hover {
-      background: rgba(239, 68, 68, 0.3);
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
-      transform: translateY(-1px);
-    }
-    .btn-warn {
-      background: rgba(234, 179, 8, 0.15);
-      border: 1px solid rgba(234, 179, 8, 0.3);
-      color: #fde68a;
-    }
-    .btn-warn:hover {
-      background: rgba(234, 179, 8, 0.28);
-      box-shadow: 0 0 12px rgba(234, 179, 8, 0.2);
-      transform: translateY(-1px);
-    }
+    .btn-primary   { background: rgba(124, 58, 237, 0.55); border: 1px solid rgba(167, 139, 250, 0.4); color: #ede9fe; box-shadow: 0 0 12px rgba(124, 58, 237, 0.3); }
+    .btn-primary:hover   { background: rgba(124, 58, 237, 0.75); box-shadow: 0 0 20px rgba(124, 58, 237, 0.5); transform: translateY(-1px); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.13); transform: translateY(-1px); }
+    .btn-danger    { background: rgba(239, 68, 68, 0.18); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; }
+    .btn-danger:hover    { background: rgba(239, 68, 68, 0.3); box-shadow: 0 0 12px rgba(239, 68, 68, 0.25); transform: translateY(-1px); }
+    .btn-warn      { background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.3); color: #fde68a; }
+    .btn-warn:hover      { background: rgba(234, 179, 8, 0.28); box-shadow: 0 0 12px rgba(234, 179, 8, 0.2); transform: translateY(-1px); }
 
     .sep { width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 4px; }
+
+    /* Status message — appears briefly after actions (Format, Copy, etc.) */
     .status-msg { margin-left: auto; font-size: 12px; color: #67e8f9; min-width: 180px; text-align: right; }
     .status-msg.err { color: #fca5a5; }
 
-    /* ── Panels ── */
+    /* ── Side-by-side panels ────────────────────────────────────────────────
+       Left panel = raw input textarea.
+       Right panel = syntax-highlighted output + plain-text copy area.
+       Each is a frosted glass surface.
+    ──────────────────────────────────────────────────────────────────────── */
     .panels { display: flex; flex: 1; overflow: hidden; gap: 0; }
 
     .panel {
@@ -174,86 +157,94 @@
       display: flex; align-items: center; gap: 8px; flex-shrink: 0;
     }
 
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+    /* Status indicator dots — neutral / active (teal) / warn (amber) / err (red) */
+    .dot       { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
     .dot.active { background: #22d3ee; box-shadow: 0 0 6px #22d3ee; }
     .dot.warn   { background: #fbbf24; box-shadow: 0 0 6px #fbbf24; }
     .dot.err    { background: #f87171; box-shadow: 0 0 6px #f87171; }
 
+    /* Raw input textarea — transparent so glass panel shows through */
     #input {
-      flex: 1;
-      background: transparent;
-      color: #e2e8f0;
+      flex: 1; background: transparent; color: #e2e8f0;
       border: none; outline: none; resize: none; padding: 16px;
       font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
       font-size: 13px; line-height: 1.6; tab-size: 2; user-select: contain;
     }
     #input::placeholder { color: rgba(255,255,255,0.2); }
 
-    #output-wrap {
-      flex: 1; overflow: auto;
-      background: transparent;
-      padding: 16px;
-    }
+    /* Output scroll container */
+    #output-wrap { flex: 1; overflow: auto; background: transparent; padding: 16px; }
+
+    /* Syntax-highlighted JSON display (innerHTML, not a textarea) */
     #output {
       font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
       font-size: 13px; line-height: 1.6;
       white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;
     }
+
+    /* Plain-text copy area — read-only, select-all and paste into Rewst */
     #plain-output {
       width: 100%; height: 160px;
-      background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
-      resize: vertical;
-      color: #67e8f9;
+      background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; resize: vertical; color: #67e8f9;
       font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
       font-size: 12px; line-height: 1.5; padding: 10px;
       margin-top: 12px; outline: none;
     }
     #plain-output::placeholder { color: rgba(255,255,255,0.15); }
 
-    /* ── Syntax colors ── */
-    .j-brace     { color: #e2e8f0; }
-    .j-bracket   { color: #e2e8f0; }
-    .j-key       { color: #93c5fd; }
-    .j-key-rewst { color: #c084fc; }
-    .j-str       { color: #fca5a5; }
-    .j-jinja     { color: #fde68a; background: rgba(253, 230, 138, 0.08); border-radius: 3px; padding: 0 3px; }
-    .j-num       { color: #86efac; }
-    .j-bool      { color: #60a5fa; }
-    .j-null      { color: #60a5fa; }
+    /* ── Syntax highlight token colors ──────────────────────────────────────
+       Applied via <span class="j-*"> in the highlight() function.
+       Rewst-specific keys get purple (j-key-rewst) to stand out from
+       generic keys (j-key in blue). Jinja expressions get amber with a
+       subtle background so they're visually distinct from string values.
+    ──────────────────────────────────────────────────────────────────────── */
+    .j-brace     { color: #e2e8f0; }         /* { } */
+    .j-bracket   { color: #e2e8f0; }         /* [ ] */
+    .j-key       { color: #93c5fd; }         /* generic JSON key */
+    .j-key-rewst { color: #c084fc; }         /* Rewst action key (name, with, input, etc.) */
+    .j-str       { color: #fca5a5; }         /* string value */
+    .j-jinja     { color: #fde68a; background: rgba(253, 230, 138, 0.08); border-radius: 3px; padding: 0 3px; } /* {{ }} / {% %} */
+    .j-num       { color: #86efac; }         /* number */
+    .j-bool      { color: #60a5fa; }         /* true / false */
+    .j-null      { color: #60a5fa; }         /* null */
     .j-colon     { color: rgba(255,255,255,0.5); }
     .j-comma     { color: rgba(255,255,255,0.5); }
 
-    /* ── Fixes bar ── */
+    /* ── Fixes bar ───────────────────────────────────────────────────────────
+       One-line strip below the panels that lists what was auto-corrected
+       (e.g., "Auto-fixed: Stripped line comments · Fixed literal newlines")
+    ──────────────────────────────────────────────────────────────────────── */
     #fixes-list {
-      font-size: 11px;
-      color: rgba(255,255,255,0.35);
+      font-size: 11px; color: rgba(255,255,255,0.35);
       padding: 4px 16px;
       background: rgba(255,255,255,0.03);
       border-top: 1px solid rgba(255,255,255,0.06);
-      min-height: 22px;
-      flex-shrink: 0;
+      min-height: 22px; flex-shrink: 0;
     }
 
-    /* ── Error bar ── */
+    /* ── Error bar ───────────────────────────────────────────────────────────
+       Shown when JSON cannot be parsed even after sanitization.
+       Displays the raw parse error message from JSON.parse().
+    ──────────────────────────────────────────────────────────────────────── */
     #error-bar {
       display: none;
       background: rgba(239, 68, 68, 0.12);
       backdrop-filter: blur(8px);
       border-top: 1px solid rgba(239, 68, 68, 0.3);
-      color: #fca5a5;
-      padding: 8px 16px;
-      font-size: 12px; font-family: monospace;
-      flex-shrink: 0;
+      color: #fca5a5; padding: 8px 16px;
+      font-size: 12px; font-family: monospace; flex-shrink: 0;
     }
 
-    /* ── Log panel ── */
+    /* ── Error log panel ─────────────────────────────────────────────────────
+       Collapsible panel that stores a history of parse errors.
+       Toggled by the "Error Log" button. Entries are persisted to
+       localStorage (without input snippets to avoid leaking sensitive data).
+    ──────────────────────────────────────────────────────────────────────── */
     #log-panel {
       display: none; flex-direction: column;
       background: rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
       border-top: 1px solid rgba(239, 68, 68, 0.25);
       max-height: 220px; flex-shrink: 0;
     }
@@ -262,39 +253,30 @@
     #log-header {
       background: rgba(239, 68, 68, 0.1);
       border-bottom: 1px solid rgba(239, 68, 68, 0.2);
-      padding: 5px 16px;
-      font-size: 11px; font-weight: 700; color: #fca5a5;
+      padding: 5px 16px; font-size: 11px; font-weight: 700; color: #fca5a5;
       text-transform: uppercase; letter-spacing: .8px;
       display: flex; align-items: center; gap: 10px;
     }
     #log-header span { margin-left: auto; }
-    #log-header button {
-      font-size: 11px; padding: 2px 8px;
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #fca5a5;
-      border-radius: 4px;
-    }
+    #log-header button { font-size: 11px; padding: 2px 8px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; border-radius: 4px; }
     #log-header button:hover { background: rgba(239, 68, 68, 0.3); }
 
-    #log-body {
-      overflow-y: auto; flex: 1; padding: 8px 16px;
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
-      font-size: 11px; line-height: 1.7;
-    }
+    #log-body { overflow-y: auto; flex: 1; padding: 8px 16px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11px; line-height: 1.7; }
     .log-entry { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
     .log-entry:last-child { border-bottom: none; }
     .log-ts   { color: rgba(255,255,255,0.3); margin-right: 8px; }
     .log-err  { color: #fca5a5; }
     .log-fix  { color: #67e8f9; font-size: 10px; }
+    /* Snippet shows the first 120 chars of the input at time of error — in memory only, never stored */
     .log-snip { color: rgba(255,255,255,0.25); font-size: 10px; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     #log-empty { color: rgba(255,255,255,0.2); font-style: italic; padding: 8px 0; }
 
-    /* ── Footer ── */
+    /* ── Footer ──────────────────────────────────────────────────────────────
+       Purple-tinted glass strip. Shows app name, feature summary, char count.
+    ──────────────────────────────────────────────────────────────────────── */
     footer {
       background: rgba(124, 58, 237, 0.25);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
       border-top: 1px solid rgba(167, 139, 250, 0.2);
       color: rgba(196, 181, 253, 0.8);
       font-size: 11px; padding: 4px 16px;
@@ -302,13 +284,15 @@
     }
     #char-count { margin-left: auto; }
 
+    /* Red badge on the Error Log button showing how many errors are logged */
     #log-count-badge {
-      background: #ef4444;
-      color: #fff; border-radius: 10px;
+      background: #ef4444; color: #fff; border-radius: 10px;
       padding: 0 6px; font-size: 10px; font-weight: 700; display: none;
     }
 
-    /* ── Scrollbars ── */
+    /* ── Custom scrollbars ───────────────────────────────────────────────────
+       Thin, semi-transparent scrollbars that blend with the glass UI.
+    ──────────────────────────────────────────────────────────────────────── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
@@ -317,11 +301,14 @@
 </head>
 <body>
 
+<!-- Decorative center glow blob (the other two are CSS ::before / ::after) -->
 <div id="blob3"></div>
 
 <header>
   <h1>Rewst JSON Formatter</h1>
+  <!-- Static brand badge — always visible -->
   <span class="badge badge-rewst">Rewst Mode</span>
+  <!-- These two badges are mutually exclusive — shown by JS after formatting -->
   <span class="badge badge-ready" id="badge-ready">&#10003; Ready for Rewst</span>
   <span class="badge badge-err"   id="badge-err">&#10005; Invalid</span>
 </header>
@@ -331,6 +318,7 @@
   <button class="btn-secondary" onclick="copyOutput()">&#10040; Copy Output</button>
   <button class="btn-secondary" onclick="loadTemplate()">&#10753; Load Template</button>
   <div class="sep"></div>
+  <!-- Error Log badge shows count of logged errors -->
   <button class="btn-warn"      onclick="toggleLog()">&#9888; Error Log <span id="log-count-badge">0</span></button>
   <button class="btn-secondary" onclick="exportLog()">&#8595; Export Log</button>
   <button class="btn-danger"    onclick="clearAll()">&#10005; Clear</button>
@@ -338,22 +326,29 @@
 </div>
 
 <div class="panels">
+  <!-- Left panel: raw JSON input -->
   <div class="panel">
     <div class="panel-header"><div class="dot active"></div>Raw Input</div>
     <textarea id="input" placeholder="Paste Rewst task JSON here..." spellcheck="false" oninput="onInput()"></textarea>
   </div>
+  <!-- Right panel: syntax-highlighted output + plain-text copy area -->
   <div class="panel">
     <div class="panel-header"><div class="dot" id="output-dot"></div>Formatted Output</div>
     <div id="output-wrap">
       <div id="output"></div>
+      <!-- Read-only plain textarea — easier to select-all and copy into Rewst -->
       <textarea id="plain-output" spellcheck="false" readonly placeholder="Plain JSON appears here — select all and copy to paste into Rewst..."></textarea>
     </div>
   </div>
 </div>
 
+<!-- One-line summary of what was auto-fixed (e.g., "Stripped line comments") -->
 <div id="fixes-list"></div>
+
+<!-- Parse error message — only shown when JSON.parse() fails -->
 <div id="error-bar"></div>
 
+<!-- Collapsible error history panel -->
 <div id="log-panel">
   <div id="log-header">
     &#9888; Error Log
@@ -370,6 +365,7 @@
 </footer>
 
 <script>
+  // ── DOM references ──────────────────────────────────────────────────────────
   const inputEl    = document.getElementById('input');
   const outputEl   = document.getElementById('output');
   const plainEl    = document.getElementById('plain-output');
@@ -386,20 +382,32 @@
   const logCount   = document.getElementById('log-entry-count');
   const logBadge   = document.getElementById('log-count-badge');
 
+  // ── Rewst-specific key names ────────────────────────────────────────────────
+  // These are the standard field names used in Rewst workflow action payloads.
+  // When these keys appear in the JSON output, they get the purple highlight
+  // color (j-key-rewst) instead of the standard blue (j-key) to make
+  // Rewst-specific structure immediately visible.
   const REWST_KEYS = new Set([
     'name','publishResultAs','transitionMode','humanSecondsSaved',
     'isMocked','mockInput','runAsOrgId','packOverrides','securitySchema',
     'join','timeout','with','input','output','description'
   ]);
 
-  // ── Error log ──
+  // ── Error log (persisted to localStorage) ──────────────────────────────────
+  // Stores a history of parse errors so users can review what went wrong
+  // across sessions. Capped at 200 entries to prevent unbounded growth.
+  // NOTE: Input snippets are kept in memory only and stripped before saving
+  // to avoid persisting potentially sensitive data (API keys, tokens, etc.).
   let errorLog = JSON.parse(localStorage.getItem('rewst_error_log') || '[]');
 
+  // Saves the error log to localStorage, stripping input snippets for security.
+  // Snippets remain available in the in-memory errorLog array for this session.
   function saveLog() {
     const safe = errorLog.map(({ snippet, ...rest }) => rest);
     localStorage.setItem('rewst_error_log', JSON.stringify(safe));
   }
 
+  // Updates the red badge count on the Error Log button
   function updateLogBadge() {
     const n = errorLog.length;
     logBadge.textContent = n;
@@ -407,6 +415,7 @@
     logCount.textContent = n + ' entr' + (n === 1 ? 'y' : 'ies');
   }
 
+  // Renders all log entries into the log panel (newest first)
   function renderLog() {
     if (errorLog.length === 0) {
       logEmpty.style.display = 'block';
@@ -418,93 +427,165 @@
     [...errorLog].reverse().forEach(entry => {
       const div = document.createElement('div');
       div.className = 'log-entry';
+      // All values run through escHtml() to prevent XSS from malformed input
       div.innerHTML =
-        '<span class="log-ts">' + escHtml(entry.ts) + '</span>' +
+        '<span class="log-ts">'  + escHtml(entry.ts)    + '</span>' +
         '<span class="log-err">' + escHtml(entry.error) + '</span>' +
-        (entry.fixes.length ? '<span class="log-fix"> &middot; Fixed: ' + escHtml(entry.fixes.join(', ')) + '</span>' : '') +
-        '<span class="log-snip">' + escHtml(entry.snippet) + '</span>';
+        (entry.fixes.length
+          ? '<span class="log-fix"> &middot; Fixed: ' + escHtml(entry.fixes.join(', ')) + '</span>'
+          : '') +
+        // snippet is in-memory only — may be empty for entries loaded from localStorage
+        '<span class="log-snip">' + escHtml(entry.snippet || '') + '</span>';
       logBody.appendChild(div);
     });
   }
 
+  // Adds a new entry to the error log.
+  // snippet = first 120 chars of raw input (in-memory only, not persisted)
+  // fixes = list of auto-corrections that were applied before the error
   function logError(error, snippet, fixes) {
-    errorLog.push({ ts: new Date().toLocaleString(), error, snippet: snippet.slice(0, 120).replace(/\n/g, ' '), fixes });
+    errorLog.push({
+      ts: new Date().toLocaleString(),
+      error,
+      snippet: snippet.slice(0, 120).replace(/\n/g, ' '),
+      fixes
+    });
+    // Keep log from growing unbounded
     if (errorLog.length > 200) errorLog.shift();
-    saveLog(); updateLogBadge();
+    saveLog();
+    updateLogBadge();
+    // Re-render immediately if the panel is currently open
     if (logPanel.classList.contains('open')) renderLog();
   }
 
-  function toggleLog() { logPanel.classList.toggle('open'); if (logPanel.classList.contains('open')) renderLog(); }
-  function clearLog()  { errorLog = []; saveLog(); updateLogBadge(); renderLog(); }
+  // Toggles the error log panel open/closed
+  function toggleLog() {
+    logPanel.classList.toggle('open');
+    if (logPanel.classList.contains('open')) renderLog();
+  }
 
+  // Clears all log entries from memory and localStorage
+  function clearLog() {
+    errorLog = [];
+    saveLog();
+    updateLogBadge();
+    renderLog();
+  }
+
+  // Exports the current error log as a downloadable JSON file
   function exportLog() {
     if (!errorLog.length) { setStatus('No errors to export', true); return; }
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(errorLog, null, 2)], { type: 'application/json' }));
+    a.href = URL.createObjectURL(
+      new Blob([JSON.stringify(errorLog, null, 2)], { type: 'application/json' })
+    );
     a.download = 'rewst-error-log-' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     setStatus('Log exported');
   }
 
-  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  // Escapes HTML special characters to safely insert user content into innerHTML.
+  // Prevents XSS if the input JSON contains <script> tags or other HTML.
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
 
+  // Shows a temporary status message in the toolbar (auto-clears after 4s)
   function setStatus(msg, isErr) {
     statusEl.textContent = msg;
     statusEl.className = 'status-msg' + (isErr ? ' err' : '');
     setTimeout(() => statusEl.textContent = '', 4000);
   }
 
+  // Updates the UI to the "valid JSON, ready to paste" state
   function showReady() {
-    badgeReady.style.display = 'inline-block'; badgeErr.style.display = 'none';
-    outputDot.className = 'dot active'; errorBar.style.display = 'none';
+    badgeReady.style.display = 'inline-block';
+    badgeErr.style.display = 'none';
+    outputDot.className = 'dot active';
+    errorBar.style.display = 'none';
   }
 
+  // Updates the UI to the "parse failed" state and logs the error
   function showErr(msg, raw, fixes) {
-    badgeErr.style.display = 'inline-block'; badgeReady.style.display = 'none';
-    outputDot.className = 'dot err'; errorBar.style.display = 'block';
+    badgeErr.style.display = 'inline-block';
+    badgeReady.style.display = 'none';
+    outputDot.className = 'dot err';
+    errorBar.style.display = 'block';
     errorBar.textContent = 'Error: ' + msg;
     logError(msg, raw, fixes);
   }
 
-  function onInput() { charCount.textContent = inputEl.value.length + ' chars'; }
+  // Updates the character count in the footer as the user types
+  function onInput() {
+    charCount.textContent = inputEl.value.length + ' chars';
+  }
 
-  // ── Character walker — escapes control chars inside JSON string values ──
+  // ── Character walker ────────────────────────────────────────────────────────
+  // Walks through raw text character by character, tracking whether we're
+  // inside a JSON string value. Escapes control characters found inside strings
+  // since they are invalid JSON per spec (e.g., literal newlines, tabs, NUL).
+  //
+  // Called twice during sanitization: once before Jinja tokens are restored
+  // (to catch control chars in the base JSON) and once after (to catch any
+  // control chars that were inside Jinja expressions).
   function walkAndEscape(text, flags) {
     let out = '', inStr = false, i = 0;
     while (i < text.length) {
       const ch = text[i], code = text.charCodeAt(i);
       if (!inStr) {
-        if (ch === '"') inStr = true;
+        if (ch === '"') inStr = true;  // entering a string value
         out += ch;
       } else {
         if (ch === '\\') {
+          // Escaped character — pass both the backslash and the next char through unchanged
           out += ch; i++;
           if (i < text.length) out += text[i];
         } else if (ch === '"') {
-          inStr = false; out += ch;
-        } else if (ch === '\n') { out += '\\n';  flags.newlines = true;
-        } else if (ch === '\r') { out += '\\r';  flags.newlines = true;
-        } else if (ch === '\t') { out += '\\t';  flags.newlines = true;
+          inStr = false; out += ch;   // closing quote — leaving string value
+        } else if (ch === '\n') { out += '\\n';  flags.newlines = true; // literal newline → \n
+        } else if (ch === '\r') { out += '\\r';  flags.newlines = true; // carriage return → \r
+        } else if (ch === '\t') { out += '\\t';  flags.newlines = true; // literal tab → \t
         } else if (code < 0x20) {
-          out += '\\u' + code.toString(16).padStart(4, '0'); flags.ctrl = true;
-        } else { out += ch; }
+          // Other ASCII control characters (NUL, BEL, BS, etc.) → \uXXXX escape
+          out += '\\u' + code.toString(16).padStart(4, '0');
+          flags.ctrl = true;
+        } else {
+          out += ch;
+        }
       }
       i++;
     }
     return out;
   }
 
-  // ── Rewst-aware sanitizer ──
+  // ── Rewst-aware sanitizer ───────────────────────────────────────────────────
+  // Fixes the most common reasons Rewst rejects pasted JSON:
+  //   1. Block comments  /* ... */  — not valid JSON
+  //   2. Line comments   // ...     — not valid JSON (full-line only to avoid
+  //                                   breaking URLs like https://...)
+  //   3. Literal newlines/tabs inside string values — invalid JSON per spec
+  //   4. Raw control characters inside string values — invalid JSON per spec
+  //
+  // Jinja expressions ({{ }} and {% %}) are temporarily replaced with safe
+  // placeholder tokens before processing and restored afterward. This prevents
+  // the escaper from corrupting the curly braces and pipe characters that
+  // Jinja syntax relies on.
+  //
+  // Returns { result: sanitizedText, fixes: ['what was fixed', ...] }
   function rewstSanitize(raw) {
     const fixes = [];
     let text = raw;
 
-    // 1. Strip block comments /* ... */
+    // Step 1 — Remove /* block comments */
     let hadBlock = false;
     text = text.replace(/\/\*[\s\S]*?\*\//g, () => { hadBlock = true; return ''; });
     if (hadBlock) fixes.push('Stripped block comments');
 
-    // 2. Strip // line comments (full-line only, avoids https://)
+    // Step 2 — Remove // line comments (only lines where // is the first non-whitespace)
+    // This avoids accidentally removing the // in URLs like https://example.com
     let hadLine = false;
     text = text.split('\n').map(line => {
       if (line.trimStart().startsWith('//')) { hadLine = true; return ''; }
@@ -512,24 +593,24 @@
     }).join('\n');
     if (hadLine) fixes.push('Stripped line comments');
 
-
-    // 4. Protect Jinja expressions {{ ... }} and {% ... %}
+    // Step 3 — Temporarily replace Jinja expressions with safe placeholder tokens
+    // so the character walker doesn't escape their special characters
     const jinjaTokens = [];
     text = text.replace(/\{[{%][\s\S]*?[%}]\}/g, m => {
       jinjaTokens.push(m);
       return '__JINJA_' + (jinjaTokens.length - 1) + '__';
     });
 
-    // 5. First walk — escape control chars in string values
+    // Step 4 — First pass: escape control characters in the base JSON
     const f1 = { newlines: false, ctrl: false };
     text = walkAndEscape(text, f1);
     if (f1.newlines) fixes.push('Fixed literal newlines in strings');
     if (f1.ctrl)     fixes.push('Escaped control characters');
 
-    // 6. Restore Jinja tokens
+    // Step 5 — Restore the Jinja expressions back into the text
     text = text.replace(/__JINJA_(\d+)__/g, (_, i) => jinjaTokens[parseInt(i)]);
 
-    // 7. Second walk — catches control chars inside restored Jinja expressions
+    // Step 6 — Second pass: catch any control characters that were inside Jinja expressions
     const f2 = { newlines: false, ctrl: false };
     text = walkAndEscape(text, f2);
     if (f2.newlines) fixes.push('Fixed newlines in Jinja expressions');
@@ -538,35 +619,68 @@
     return { result: text, fixes };
   }
 
-  // ── Syntax highlighter ──
+  // ── Syntax highlighter ──────────────────────────────────────────────────────
+  // Recursively walks a parsed JavaScript object and builds an HTML string
+  // with <span> tokens for each JSON element type. Called after JSON.parse()
+  // so the input is guaranteed to be valid — no error handling needed here.
+  //
+  // Jinja expressions inside string values get their own amber highlight span
+  // so they stand out from the surrounding string color.
   function highlight(obj, indent, level) {
-    const pad = ' '.repeat(indent), cur = pad.repeat(level), next = pad.repeat(level + 1);
+    const pad  = ' '.repeat(indent);
+    const cur  = pad.repeat(level);
+    const next = pad.repeat(level + 1);
+
     if (obj === null)             return '<span class="j-null">null</span>';
     if (typeof obj === 'boolean') return '<span class="j-bool">' + obj + '</span>';
-    if (typeof obj === 'number')  return '<span class="j-num">' + obj + '</span>';
+    if (typeof obj === 'number')  return '<span class="j-num">'  + obj + '</span>';
+
     if (typeof obj === 'string') {
-      const esc = obj.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      const withJinja = esc.replace(/\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/g, m => '<span class="j-jinja">' + m + '</span>');
+      // Escape HTML entities to prevent XSS, then re-highlight Jinja sub-expressions
+      const esc = obj
+        .replace(/&/g,  '&amp;')
+        .replace(/</g,  '&lt;')
+        .replace(/>/g,  '&gt;')
+        .replace(/"/g,  '&quot;');
+      const withJinja = esc.replace(
+        /\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/g,
+        m => '<span class="j-jinja">' + m + '</span>'
+      );
       return '<span class="j-str">"' + withJinja + '"</span>';
     }
+
     if (Array.isArray(obj)) {
       if (!obj.length) return '<span class="j-bracket">[]</span>';
-      const items = obj.map(v => next + highlight(v, indent, level + 1)).join('<span class="j-comma">,</span>\n');
+      const items = obj
+        .map(v => next + highlight(v, indent, level + 1))
+        .join('<span class="j-comma">,</span>\n');
       return '<span class="j-bracket">[</span>\n' + items + '\n' + cur + '<span class="j-bracket">]</span>';
     }
+
     if (typeof obj === 'object') {
       const keys = Object.keys(obj);
       if (!keys.length) return '<span class="j-brace">{}</span>';
       const items = keys.map(k => {
         const esc = k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        // Use purple for known Rewst action keys, blue for everything else
         const cls = REWST_KEYS.has(k) ? 'j-key-rewst' : 'j-key';
-        return next + '<span class="' + cls + '">"' + esc + '"</span><span class="j-colon">: </span>' + highlight(obj[k], indent, level + 1);
+        return next +
+          '<span class="' + cls + '">"' + esc + '"</span>' +
+          '<span class="j-colon">: </span>' +
+          highlight(obj[k], indent, level + 1);
       }).join('<span class="j-comma">,</span>\n');
       return '<span class="j-brace">{</span>\n' + items + '\n' + cur + '<span class="j-brace">}</span>';
     }
+
     return String(obj);
   }
 
+  // ── Main format action ──────────────────────────────────────────────────────
+  // Called by the Format button, Ctrl+Enter, and auto-paste.
+  // 1. Sanitizes the raw input
+  // 2. Attempts JSON.parse()
+  // 3. On success: renders highlighted output + populates plain-text area
+  // 4. On failure: shows parse error + logs it
   function formatJSON() {
     const raw = inputEl.value.trim();
     if (!raw) { setStatus('Nothing to format', true); return; }
@@ -574,6 +688,7 @@
     const { result: sanitized, fixes } = rewstSanitize(raw);
     fixesList.textContent = fixes.length ? 'Auto-fixed: ' + fixes.join(' · ') : '';
 
+    // Write sanitized text back to the input so the user can see what changed
     if (sanitized !== raw) {
       inputEl.value = sanitized;
       charCount.textContent = sanitized.length + ' chars';
@@ -581,56 +696,96 @@
 
     try {
       const parsed = JSON.parse(sanitized);
+
+      // Render syntax-highlighted HTML into the output display panel
       outputEl.innerHTML = highlight(parsed, 2, 0);
+
+      // Also produce clean plain JSON for the copy area (no HTML tags)
       outputEl._plain = JSON.stringify(parsed, null, 2);
-      plainEl.value = outputEl._plain;
+      plainEl.value   = outputEl._plain;
+
       showReady();
       setStatus(fixes.length ? 'Formatted + ' + fixes.length + ' fix(es)' : 'Ready for Rewst');
+
     } catch (e) {
+      // Sanitization wasn't enough to fix the JSON — show the raw parse error
       showErr(e.message, raw, fixes);
       setStatus('Cannot fix — check input', true);
       outputEl.innerHTML = '';
-      outputEl._plain = '';
+      outputEl._plain    = '';
     }
   }
 
+  // ── Copy output to clipboard ────────────────────────────────────────────────
+  // Prefers the modern Clipboard API. Falls back to the legacy execCommand
+  // for environments where the Clipboard API is unavailable (e.g., http://).
   function copyOutput() {
     const plain = outputEl._plain;
     if (!plain) { setStatus('Nothing to copy', true); return; }
-    plainEl.select();
     navigator.clipboard.writeText(plain)
       .then(() => setStatus('Copied — paste into Rewst'))
       .catch(() => {
+        // Legacy fallback: select the textarea and use execCommand
         plainEl.select();
         document.execCommand('copy');
         setStatus('Copied — paste into Rewst');
       });
   }
 
+  // Resets all panels, badges, and status back to the initial empty state
   function clearAll() {
-    inputEl.value = ''; outputEl.innerHTML = ''; outputEl._plain = '';
-    plainEl.value = '';
-    errorBar.style.display = 'none'; fixesList.textContent = '';
-    charCount.textContent = '0 chars';
-    badgeReady.style.display = 'none'; badgeErr.style.display = 'none';
-    outputDot.className = 'dot'; setStatus('Cleared');
+    inputEl.value      = '';
+    outputEl.innerHTML = '';
+    outputEl._plain    = '';
+    plainEl.value      = '';
+    errorBar.style.display  = 'none';
+    fixesList.textContent   = '';
+    charCount.textContent   = '0 chars';
+    badgeReady.style.display = 'none';
+    badgeErr.style.display   = 'none';
+    outputDot.className = 'dot';
+    setStatus('Cleared');
   }
 
+  // ── Template loader ─────────────────────────────────────────────────────────
+  // Fetches rewst-http-template.json from the local server and loads it into
+  // the input panel, then immediately formats it. This gives users a starting
+  // point for building Rewst HTTP request actions targeting Azure AI Foundry.
   function loadTemplate() {
-    fetch('/rewst-http-template.json').then(r => r.text()).then(t => {
-      inputEl.value = t; charCount.textContent = t.length + ' chars';
-      formatJSON(); setStatus('Template loaded');
-    }).catch(() => setStatus('Template not found', true));
+    fetch('/rewst-http-template.json')
+      .then(r => r.text())
+      .then(t => {
+        inputEl.value = t;
+        charCount.textContent = t.length + ' chars';
+        formatJSON();
+        setStatus('Template loaded');
+      })
+      .catch(() => setStatus('Template not found', true));
   }
 
+  // ── Event listeners ─────────────────────────────────────────────────────────
+
+  // Auto-format on paste — short delay lets the browser finish inserting the text
   inputEl.addEventListener('paste', () => setTimeout(() => formatJSON(), 50));
+
+  // Ctrl+A in the input selects all text in the input (not the whole page)
   inputEl.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); inputEl.select(); }
-  });
-  document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); formatJSON(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+      e.preventDefault();
+      inputEl.select();
+    }
   });
 
+  // Ctrl+Enter / Cmd+Enter triggers format from anywhere on the page
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      formatJSON();
+    }
+  });
+
+  // ── Init ────────────────────────────────────────────────────────────────────
+  // Restore error log badge count from localStorage on page load
   updateLogBadge();
 </script>
 </body>

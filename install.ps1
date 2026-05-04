@@ -1,14 +1,26 @@
+# -----------------------------------------------------------------------------
+# install.ps1 — Installer for Rewst JSON Formatter (Windows)
+#
+# Downloads and sets up the tool in %USERPROFILE%\rewst-json-formatter.
+# Re-running this script updates an existing installation.
+#
+# One-liner install (run in PowerShell):
+#   irm https://raw.githubusercontent.com/jminiel89/rewst-json-formatter/main/install.ps1 | iex
+# -----------------------------------------------------------------------------
 #Requires -Version 5.1
 $ErrorActionPreference = "Stop"
 
-$repo      = "https://github.com/jminiel89/rewst-json-formatter"
-$rawBase   = "$repo/raw/main"
+$repo       = "https://github.com/jminiel89/rewst-json-formatter"
+$rawBase    = "$repo/raw/main"
 $installDir = "$env:USERPROFILE\rewst-json-formatter"
 
 Write-Host "Rewst JSON Formatter -- Installer" -ForegroundColor Cyan
 Write-Host "----------------------------------"
 
-# Check Python
+# ── Step 1: Verify Python 3 is available ─────────────────────────────────────
+# The tool uses Python's built-in HTTP server. No packages or pip needed.
+# Try 'python' first (standard on most Windows installs), then 'python3'
+# (used on some systems or when installed from the Microsoft Store).
 $python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $python) {
   $python = Get-Command python3 -ErrorAction SilentlyContinue
@@ -24,16 +36,23 @@ if (-not $python) {
 $pythonExe = $python.Source
 Write-Host "Found: $(&$pythonExe --version)"
 
-# Clone or update
+# ── Step 2: Download or update the tool ──────────────────────────────────────
+# Prefer git clone so future updates can be pulled with the same install command.
+# Fall back to Invoke-WebRequest if git is not available.
 $git = Get-Command git -ErrorAction SilentlyContinue
 
 if (Test-Path "$installDir\.git") {
+  # Already installed — pull latest changes only (fast-forward, no merges)
   Write-Host "Existing install found -- updating..."
   & git -C $installDir pull --ff-only
+
 } elseif ($git) {
+  # Git is available — clone the full repository
   Write-Host "Cloning repo..."
   & git clone "$repo.git" $installDir
+
 } else {
+  # Git not found — download only the required files via Invoke-WebRequest
   Write-Host "git not found -- downloading files directly..."
   New-Item -ItemType Directory -Force -Path $installDir | Out-Null
   $files = @("index.html", "rewst-http-template.json", "start.ps1")
@@ -43,6 +62,7 @@ if (Test-Path "$installDir\.git") {
   }
 }
 
+# ── Done ─────────────────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "Done. Installed to: $installDir" -ForegroundColor Green
 Write-Host ""
