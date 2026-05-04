@@ -1,0 +1,24 @@
+{
+  "name": "http_request",
+  "description": "Generic HTTP request template with Jinja variable expressions",
+  "url": "https://{{ vars.api_host }}/api/v1/{{ vars.endpoint }}",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer {{ vars.api_token }}",
+    "Content-Type": "application/json",
+    "X-Request-ID": "{{ vars.request_id | default('auto') }}"
+  },
+  "body": {
+    "user": "{{ vars.username }}",
+    "action": "{{ vars.action_type }}",
+    "payload": {
+      "data": "{{ vars.input_data }}",
+      "timestamp": "{{ vars.timestamp | default('now') }}",
+      "options": {
+        "dry_run": false,
+        "timeout": 120
+      }
+    }
+  },
+  "on_error": "{{ vars.error_handler | default('raise') }}"
+}

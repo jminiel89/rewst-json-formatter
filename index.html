@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rewst JSON Formatter</title>
+  <title>Jinja JSON Formatter</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -50,8 +50,8 @@
       bottom: -100px; right: -80px;
     }
     #blob3 {
-      /* Indigo blob — center, rendered as a real element since CSS only
-         allows ::before and ::after per selector */
+      /* Indigo blob — center. CSS only allows ::before and ::after per
+         selector, so this third blob needs a real element. */
       width: 300px; height: 300px;
       background: radial-gradient(circle, #4f46e5 0%, transparent 70%);
       top: 40%; left: 55%;
@@ -59,10 +59,8 @@
     }
 
     /* ── Glass effect ───────────────────────────────────────────────────────
-       Shared glass style. backdrop-filter blurs whatever is behind the
-       element (the gradient + blobs), creating the frosted-glass look.
-       Applied directly on header, panels, etc. rather than as a utility
-       class to allow per-element tuning.
+       backdrop-filter blurs whatever is behind the element (the gradient
+       and blobs), creating the frosted-glass look.
     ──────────────────────────────────────────────────────────────────────── */
     .glass {
       background: rgba(255, 255, 255, 0.055);
@@ -92,7 +90,7 @@
 
     /* Status badges — shown/hidden by JS based on parse result */
     .badge { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 600; }
-    .badge-rewst  { background: rgba(124, 58, 237, 0.35); border: 1px solid rgba(167, 139, 250, 0.4); color: #c4b5fd; }
+    .badge-jinja  { background: rgba(124, 58, 237, 0.35); border: 1px solid rgba(167, 139, 250, 0.4); color: #c4b5fd; }
     .badge-ready  { background: rgba(6, 182, 212, 0.2);   border: 1px solid rgba(6, 182, 212, 0.4);   color: #67e8f9; display: none; }
     .badge-err    { background: rgba(239, 68, 68, 0.2);   border: 1px solid rgba(239, 68, 68, 0.4);   color: #fca5a5; display: none; }
 
@@ -158,7 +156,7 @@
     }
 
     /* Status indicator dots — neutral / active (teal) / warn (amber) / err (red) */
-    .dot       { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+    .dot        { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
     .dot.active { background: #22d3ee; box-shadow: 0 0 6px #22d3ee; }
     .dot.warn   { background: #fbbf24; box-shadow: 0 0 6px #fbbf24; }
     .dot.err    { background: #f87171; box-shadow: 0 0 6px #f87171; }
@@ -182,7 +180,7 @@
       white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;
     }
 
-    /* Plain-text copy area — read-only, select-all and paste into Rewst */
+    /* Plain-text copy area — read-only, select-all and copy */
     #plain-output {
       width: 100%; height: 160px;
       background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);
@@ -194,25 +192,23 @@
     #plain-output::placeholder { color: rgba(255,255,255,0.15); }
 
     /* ── Syntax highlight token colors ──────────────────────────────────────
-       Applied via <span class="j-*"> in the highlight() function.
-       Rewst-specific keys get purple (j-key-rewst) to stand out from
-       generic keys (j-key in blue). Jinja expressions get amber with a
-       subtle background so they're visually distinct from string values.
+       Applied via <span class="j-*"> by the highlight() function.
+       Jinja expressions ({{ }} and {% %}) get amber with a subtle background
+       so they're visually distinct from surrounding string content.
     ──────────────────────────────────────────────────────────────────────── */
-    .j-brace     { color: #e2e8f0; }         /* { } */
-    .j-bracket   { color: #e2e8f0; }         /* [ ] */
-    .j-key       { color: #93c5fd; }         /* generic JSON key */
-    .j-key-rewst { color: #c084fc; }         /* Rewst action key (name, with, input, etc.) */
-    .j-str       { color: #fca5a5; }         /* string value */
-    .j-jinja     { color: #fde68a; background: rgba(253, 230, 138, 0.08); border-radius: 3px; padding: 0 3px; } /* {{ }} / {% %} */
-    .j-num       { color: #86efac; }         /* number */
-    .j-bool      { color: #60a5fa; }         /* true / false */
-    .j-null      { color: #60a5fa; }         /* null */
-    .j-colon     { color: rgba(255,255,255,0.5); }
-    .j-comma     { color: rgba(255,255,255,0.5); }
+    .j-brace   { color: #e2e8f0; }           /* { } */
+    .j-bracket { color: #e2e8f0; }           /* [ ] */
+    .j-key     { color: #93c5fd; }           /* JSON key */
+    .j-str     { color: #fca5a5; }           /* string value */
+    .j-jinja   { color: #fde68a; background: rgba(253, 230, 138, 0.08); border-radius: 3px; padding: 0 3px; } /* {{ }} / {% %} */
+    .j-num     { color: #86efac; }           /* number */
+    .j-bool    { color: #60a5fa; }           /* true / false */
+    .j-null    { color: #60a5fa; }           /* null */
+    .j-colon   { color: rgba(255,255,255,0.5); }
+    .j-comma   { color: rgba(255,255,255,0.5); }
 
     /* ── Fixes bar ───────────────────────────────────────────────────────────
-       One-line strip below the panels that lists what was auto-corrected
+       One-line strip that lists what was auto-corrected after formatting
        (e.g., "Auto-fixed: Stripped line comments · Fixed literal newlines")
     ──────────────────────────────────────────────────────────────────────── */
     #fixes-list {
@@ -225,7 +221,7 @@
 
     /* ── Error bar ───────────────────────────────────────────────────────────
        Shown when JSON cannot be parsed even after sanitization.
-       Displays the raw parse error message from JSON.parse().
+       Displays the raw error message from JSON.parse().
     ──────────────────────────────────────────────────────────────────────── */
     #error-bar {
       display: none;
@@ -237,9 +233,9 @@
     }
 
     /* ── Error log panel ─────────────────────────────────────────────────────
-       Collapsible panel that stores a history of parse errors.
-       Toggled by the "Error Log" button. Entries are persisted to
-       localStorage (without input snippets to avoid leaking sensitive data).
+       Collapsible panel storing a history of parse errors across sessions.
+       Toggled by the Error Log button. Persisted to localStorage without
+       input snippets to avoid storing any sensitive data.
     ──────────────────────────────────────────────────────────────────────── */
     #log-panel {
       display: none; flex-direction: column;
@@ -267,7 +263,7 @@
     .log-ts   { color: rgba(255,255,255,0.3); margin-right: 8px; }
     .log-err  { color: #fca5a5; }
     .log-fix  { color: #67e8f9; font-size: 10px; }
-    /* Snippet shows the first 120 chars of the input at time of error — in memory only, never stored */
+    /* Snippet shows the first 120 chars of input at error time — in memory only, never persisted */
     .log-snip { color: rgba(255,255,255,0.25); font-size: 10px; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     #log-empty { color: rgba(255,255,255,0.2); font-style: italic; padding: 8px 0; }
 
@@ -284,7 +280,7 @@
     }
     #char-count { margin-left: auto; }
 
-    /* Red badge on the Error Log button showing how many errors are logged */
+    /* Red badge on the Error Log button showing the number of logged errors */
     #log-count-badge {
       background: #ef4444; color: #fff; border-radius: 10px;
       padding: 0 6px; font-size: 10px; font-weight: 700; display: none;
@@ -305,20 +301,20 @@
 <div id="blob3"></div>
 
 <header>
-  <h1>Rewst JSON Formatter</h1>
-  <!-- Static brand badge — always visible -->
-  <span class="badge badge-rewst">Rewst Mode</span>
-  <!-- These two badges are mutually exclusive — shown by JS after formatting -->
-  <span class="badge badge-ready" id="badge-ready">&#10003; Ready for Rewst</span>
+  <h1>Jinja JSON Formatter</h1>
+  <!-- Static badge indicating Jinja-aware mode is always active -->
+  <span class="badge badge-jinja">Jinja Aware</span>
+  <!-- These two badges are mutually exclusive, toggled by JS after formatting -->
+  <span class="badge badge-ready" id="badge-ready">&#10003; Valid JSON</span>
   <span class="badge badge-err"   id="badge-err">&#10005; Invalid</span>
 </header>
 
 <div class="toolbar">
-  <button class="btn-primary"   onclick="formatJSON()">&#9654; Format for Rewst</button>
+  <button class="btn-primary"   onclick="formatJSON()">&#9654; Format</button>
   <button class="btn-secondary" onclick="copyOutput()">&#10040; Copy Output</button>
-  <button class="btn-secondary" onclick="loadTemplate()">&#10753; Load Template</button>
+  <button class="btn-secondary" onclick="loadTemplate()">&#10753; Load Example</button>
   <div class="sep"></div>
-  <!-- Error Log badge shows count of logged errors -->
+  <!-- Badge shows count of errors currently in the log -->
   <button class="btn-warn"      onclick="toggleLog()">&#9888; Error Log <span id="log-count-badge">0</span></button>
   <button class="btn-secondary" onclick="exportLog()">&#8595; Export Log</button>
   <button class="btn-danger"    onclick="clearAll()">&#10005; Clear</button>
@@ -329,23 +325,23 @@
   <!-- Left panel: raw JSON input -->
   <div class="panel">
     <div class="panel-header"><div class="dot active"></div>Raw Input</div>
-    <textarea id="input" placeholder="Paste Rewst task JSON here..." spellcheck="false" oninput="onInput()"></textarea>
+    <textarea id="input" placeholder="Paste JSON with Jinja expressions here..." spellcheck="false" oninput="onInput()"></textarea>
   </div>
   <!-- Right panel: syntax-highlighted output + plain-text copy area -->
   <div class="panel">
     <div class="panel-header"><div class="dot" id="output-dot"></div>Formatted Output</div>
     <div id="output-wrap">
       <div id="output"></div>
-      <!-- Read-only plain textarea — easier to select-all and copy into Rewst -->
-      <textarea id="plain-output" spellcheck="false" readonly placeholder="Plain JSON appears here — select all and copy to paste into Rewst..."></textarea>
+      <!-- Read-only textarea for easy select-all and copy -->
+      <textarea id="plain-output" spellcheck="false" readonly placeholder="Formatted JSON appears here..."></textarea>
     </div>
   </div>
 </div>
 
-<!-- One-line summary of what was auto-fixed (e.g., "Stripped line comments") -->
+<!-- One-line summary of auto-fixes applied (e.g., "Stripped line comments") -->
 <div id="fixes-list"></div>
 
-<!-- Parse error message — only shown when JSON.parse() fails -->
+<!-- Parse error message — only visible when JSON.parse() fails -->
 <div id="error-bar"></div>
 
 <!-- Collapsible error history panel -->
@@ -359,8 +355,8 @@
 </div>
 
 <footer>
-  <span>Rewst JSON Formatter</span>
-  <span>Auto-sanitizes comments &middot; Jinja &middot; control chars</span>
+  <span>Jinja JSON Formatter</span>
+  <span>Auto-sanitizes comments &middot; Jinja expressions &middot; control chars</span>
   <span id="char-count">0 chars</span>
 </footer>
 
@@ -382,29 +378,18 @@
   const logCount   = document.getElementById('log-entry-count');
   const logBadge   = document.getElementById('log-count-badge');
 
-  // ── Rewst-specific key names ────────────────────────────────────────────────
-  // These are the standard field names used in Rewst workflow action payloads.
-  // When these keys appear in the JSON output, they get the purple highlight
-  // color (j-key-rewst) instead of the standard blue (j-key) to make
-  // Rewst-specific structure immediately visible.
-  const REWST_KEYS = new Set([
-    'name','publishResultAs','transitionMode','humanSecondsSaved',
-    'isMocked','mockInput','runAsOrgId','packOverrides','securitySchema',
-    'join','timeout','with','input','output','description'
-  ]);
-
   // ── Error log (persisted to localStorage) ──────────────────────────────────
   // Stores a history of parse errors so users can review what went wrong
   // across sessions. Capped at 200 entries to prevent unbounded growth.
   // NOTE: Input snippets are kept in memory only and stripped before saving
-  // to avoid persisting potentially sensitive data (API keys, tokens, etc.).
-  let errorLog = JSON.parse(localStorage.getItem('rewst_error_log') || '[]');
+  // to avoid persisting potentially sensitive data (tokens, keys, etc.).
+  let errorLog = JSON.parse(localStorage.getItem('jinja_json_formatter_errors') || '[]');
 
   // Saves the error log to localStorage, stripping input snippets for security.
   // Snippets remain available in the in-memory errorLog array for this session.
   function saveLog() {
     const safe = errorLog.map(({ snippet, ...rest }) => rest);
-    localStorage.setItem('rewst_error_log', JSON.stringify(safe));
+    localStorage.setItem('jinja_json_formatter_errors', JSON.stringify(safe));
   }
 
   // Updates the red badge count on the Error Log button
@@ -442,7 +427,7 @@
 
   // Adds a new entry to the error log.
   // snippet = first 120 chars of raw input (in-memory only, not persisted)
-  // fixes = list of auto-corrections that were applied before the error
+  // fixes = list of auto-corrections applied before the error occurred
   function logError(error, snippet, fixes) {
     errorLog.push({
       ts: new Date().toLocaleString(),
@@ -479,7 +464,7 @@
     a.href = URL.createObjectURL(
       new Blob([JSON.stringify(errorLog, null, 2)], { type: 'application/json' })
     );
-    a.download = 'rewst-error-log-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = 'jinja-json-formatter-errors-' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     setStatus('Log exported');
   }
@@ -500,7 +485,7 @@
     setTimeout(() => statusEl.textContent = '', 4000);
   }
 
-  // Updates the UI to the "valid JSON, ready to paste" state
+  // Updates the UI to the "valid JSON" state
   function showReady() {
     badgeReady.style.display = 'inline-block';
     badgeErr.style.display = 'none';
@@ -561,8 +546,8 @@
     return out;
   }
 
-  // ── Rewst-aware sanitizer ───────────────────────────────────────────────────
-  // Fixes the most common reasons Rewst rejects pasted JSON:
+  // ── Jinja-aware sanitizer ───────────────────────────────────────────────────
+  // Fixes the most common reasons JSON with Jinja expressions fails to parse:
   //   1. Block comments  /* ... */  — not valid JSON
   //   2. Line comments   // ...     — not valid JSON (full-line only to avoid
   //                                   breaking URLs like https://...)
@@ -572,10 +557,10 @@
   // Jinja expressions ({{ }} and {% %}) are temporarily replaced with safe
   // placeholder tokens before processing and restored afterward. This prevents
   // the escaper from corrupting the curly braces and pipe characters that
-  // Jinja syntax relies on.
+  // Jinja syntax relies on (e.g., {{ value | default('x') }}).
   //
   // Returns { result: sanitizedText, fixes: ['what was fixed', ...] }
-  function rewstSanitize(raw) {
+  function sanitize(raw) {
     const fixes = [];
     let text = raw;
 
@@ -610,7 +595,7 @@
     // Step 5 — Restore the Jinja expressions back into the text
     text = text.replace(/__JINJA_(\d+)__/g, (_, i) => jinjaTokens[parseInt(i)]);
 
-    // Step 6 — Second pass: catch any control characters that were inside Jinja expressions
+    // Step 6 — Second pass: catch any control characters inside Jinja expressions
     const f2 = { newlines: false, ctrl: false };
     text = walkAndEscape(text, f2);
     if (f2.newlines) fixes.push('Fixed newlines in Jinja expressions');
@@ -625,7 +610,7 @@
   // so the input is guaranteed to be valid — no error handling needed here.
   //
   // Jinja expressions inside string values get their own amber highlight span
-  // so they stand out from the surrounding string color.
+  // so they're visually distinct from surrounding string content.
   function highlight(obj, indent, level) {
     const pad  = ' '.repeat(indent);
     const cur  = pad.repeat(level);
@@ -636,12 +621,12 @@
     if (typeof obj === 'number')  return '<span class="j-num">'  + obj + '</span>';
 
     if (typeof obj === 'string') {
-      // Escape HTML entities to prevent XSS, then re-highlight Jinja sub-expressions
+      // Escape HTML entities first to prevent XSS, then highlight Jinja sub-expressions
       const esc = obj
-        .replace(/&/g,  '&amp;')
-        .replace(/</g,  '&lt;')
-        .replace(/>/g,  '&gt;')
-        .replace(/"/g,  '&quot;');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
       const withJinja = esc.replace(
         /\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/g,
         m => '<span class="j-jinja">' + m + '</span>'
@@ -661,11 +646,9 @@
       const keys = Object.keys(obj);
       if (!keys.length) return '<span class="j-brace">{}</span>';
       const items = keys.map(k => {
-        const esc = k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        // Use purple for known Rewst action keys, blue for everything else
-        const cls = REWST_KEYS.has(k) ? 'j-key-rewst' : 'j-key';
+        const esc = k.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         return next +
-          '<span class="' + cls + '">"' + esc + '"</span>' +
+          '<span class="j-key">"' + esc + '"</span>' +
           '<span class="j-colon">: </span>' +
           highlight(obj[k], indent, level + 1);
       }).join('<span class="j-comma">,</span>\n');
@@ -677,7 +660,7 @@
 
   // ── Main format action ──────────────────────────────────────────────────────
   // Called by the Format button, Ctrl+Enter, and auto-paste.
-  // 1. Sanitizes the raw input
+  // 1. Sanitizes the raw input (strips comments, escapes control chars)
   // 2. Attempts JSON.parse()
   // 3. On success: renders highlighted output + populates plain-text area
   // 4. On failure: shows parse error + logs it
@@ -685,7 +668,7 @@
     const raw = inputEl.value.trim();
     if (!raw) { setStatus('Nothing to format', true); return; }
 
-    const { result: sanitized, fixes } = rewstSanitize(raw);
+    const { result: sanitized, fixes } = sanitize(raw);
     fixesList.textContent = fixes.length ? 'Auto-fixed: ' + fixes.join(' · ') : '';
 
     // Write sanitized text back to the input so the user can see what changed
@@ -705,10 +688,10 @@
       plainEl.value   = outputEl._plain;
 
       showReady();
-      setStatus(fixes.length ? 'Formatted + ' + fixes.length + ' fix(es)' : 'Ready for Rewst');
+      setStatus(fixes.length ? 'Formatted + ' + fixes.length + ' fix(es)' : 'Valid JSON');
 
     } catch (e) {
-      // Sanitization wasn't enough to fix the JSON — show the raw parse error
+      // Sanitization wasn't enough — show the raw parse error from JSON.parse()
       showErr(e.message, raw, fixes);
       setStatus('Cannot fix — check input', true);
       outputEl.innerHTML = '';
@@ -717,18 +700,18 @@
   }
 
   // ── Copy output to clipboard ────────────────────────────────────────────────
-  // Prefers the modern Clipboard API. Falls back to the legacy execCommand
-  // for environments where the Clipboard API is unavailable (e.g., http://).
+  // Prefers the modern Clipboard API. Falls back to legacy execCommand
+  // for environments where the Clipboard API is unavailable (e.g., plain http://).
   function copyOutput() {
     const plain = outputEl._plain;
     if (!plain) { setStatus('Nothing to copy', true); return; }
     navigator.clipboard.writeText(plain)
-      .then(() => setStatus('Copied — paste into Rewst'))
+      .then(() => setStatus('Copied to clipboard'))
       .catch(() => {
         // Legacy fallback: select the textarea and use execCommand
         plainEl.select();
         document.execCommand('copy');
-        setStatus('Copied — paste into Rewst');
+        setStatus('Copied to clipboard');
       });
   }
 
@@ -738,29 +721,29 @@
     outputEl.innerHTML = '';
     outputEl._plain    = '';
     plainEl.value      = '';
-    errorBar.style.display  = 'none';
-    fixesList.textContent   = '';
-    charCount.textContent   = '0 chars';
+    errorBar.style.display   = 'none';
+    fixesList.textContent    = '';
+    charCount.textContent    = '0 chars';
     badgeReady.style.display = 'none';
     badgeErr.style.display   = 'none';
     outputDot.className = 'dot';
     setStatus('Cleared');
   }
 
-  // ── Template loader ─────────────────────────────────────────────────────────
-  // Fetches rewst-http-template.json from the local server and loads it into
-  // the input panel, then immediately formats it. This gives users a starting
-  // point for building Rewst HTTP request actions targeting Azure AI Foundry.
+  // ── Example template loader ─────────────────────────────────────────────────
+  // Fetches template.json from the local server and loads it into the input
+  // panel, then immediately formats it. Gives users a starting point showing
+  // how Jinja expressions look inside a JSON structure.
   function loadTemplate() {
-    fetch('/rewst-http-template.json')
+    fetch('/template.json')
       .then(r => r.text())
       .then(t => {
         inputEl.value = t;
         charCount.textContent = t.length + ' chars';
         formatJSON();
-        setStatus('Template loaded');
+        setStatus('Example loaded');
       })
-      .catch(() => setStatus('Template not found', true));
+      .catch(() => setStatus('Example not found', true));
   }
 
   // ── Event listeners ─────────────────────────────────────────────────────────

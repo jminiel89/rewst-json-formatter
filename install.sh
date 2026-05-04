@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# install.sh — Installer for Rewst JSON Formatter (Linux / macOS)
+# install.sh — Installer for Jinja JSON Formatter (Linux / macOS)
 #
-# Downloads and sets up the tool in ~/rewst-json-formatter.
+# Downloads and sets up the tool in ~/jinja-json-formatter.
 # Re-running this script updates an existing installation.
 #
 # One-liner install:
-#   curl -fsSL https://raw.githubusercontent.com/jminiel89/rewst-json-formatter/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/jminiel89/jinja-json-formatter/main/install.sh | bash
 # -----------------------------------------------------------------------------
 set -e  # Exit immediately if any command fails
 
-REPO="https://github.com/jminiel89/rewst-json-formatter"
-INSTALL_DIR="$HOME/rewst-json-formatter"
+REPO="https://github.com/jminiel89/jinja-json-formatter"
+INSTALL_DIR="$HOME/jinja-json-formatter"
 
-echo "Rewst JSON Formatter — Installer"
+echo "Jinja JSON Formatter — Installer"
 echo "---------------------------------"
 
 # ── Step 1: Verify Python 3 is available ─────────────────────────────────────
@@ -47,7 +47,7 @@ else
   # Git not found — download only the required files directly via curl
   echo "git not found — downloading files directly..."
   mkdir -p "$INSTALL_DIR"
-  for FILE in index.html rewst-http-template.json start.sh; do
+  for FILE in index.html template.json start.sh; do
     echo "  Downloading $FILE..."
     curl -fsSL "$REPO/raw/main/$FILE" -o "$INSTALL_DIR/$FILE"
   done

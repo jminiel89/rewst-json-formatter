@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# start.ps1 — Local development server for Rewst JSON Formatter (Windows)
+# start.ps1 — Local development server for Jinja JSON Formatter (Windows)
 #
 # Starts Python's built-in HTTP server from the directory this script lives in.
 # Binds to 127.0.0.1 (localhost only) for security.
@@ -24,10 +24,10 @@ if (-not $python) {
 }
 
 # Change to the script directory so the server can find index.html
-# and rewst-http-template.json no matter where this script is called from.
+# and template.json no matter where this script is called from.
 Set-Location $PSScriptRoot
 
-Write-Host "Starting Rewst JSON Formatter on http://localhost:8080" -ForegroundColor Cyan
+Write-Host "Starting Jinja JSON Formatter on http://localhost:8080" -ForegroundColor Cyan
 Write-Host "Press Ctrl+C to stop."
 Write-Host ""
 

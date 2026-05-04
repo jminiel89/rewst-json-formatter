@@ -1,20 +1,20 @@
 # -----------------------------------------------------------------------------
-# install.ps1 — Installer for Rewst JSON Formatter (Windows)
+# install.ps1 — Installer for Jinja JSON Formatter (Windows)
 #
-# Downloads and sets up the tool in %USERPROFILE%\rewst-json-formatter.
+# Downloads and sets up the tool in %USERPROFILE%\jinja-json-formatter.
 # Re-running this script updates an existing installation.
 #
 # One-liner install (run in PowerShell):
-#   irm https://raw.githubusercontent.com/jminiel89/rewst-json-formatter/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/jminiel89/jinja-json-formatter/main/install.ps1 | iex
 # -----------------------------------------------------------------------------
 #Requires -Version 5.1
 $ErrorActionPreference = "Stop"
 
-$repo       = "https://github.com/jminiel89/rewst-json-formatter"
+$repo       = "https://github.com/jminiel89/jinja-json-formatter"
 $rawBase    = "$repo/raw/main"
-$installDir = "$env:USERPROFILE\rewst-json-formatter"
+$installDir = "$env:USERPROFILE\jinja-json-formatter"
 
-Write-Host "Rewst JSON Formatter -- Installer" -ForegroundColor Cyan
+Write-Host "Jinja JSON Formatter -- Installer" -ForegroundColor Cyan
 Write-Host "----------------------------------"
 
 # ── Step 1: Verify Python 3 is available ─────────────────────────────────────
@@ -55,7 +55,7 @@ if (Test-Path "$installDir\.git") {
   # Git not found — download only the required files via Invoke-WebRequest
   Write-Host "git not found -- downloading files directly..."
   New-Item -ItemType Directory -Force -Path $installDir | Out-Null
-  $files = @("index.html", "rewst-http-template.json", "start.ps1")
+  $files = @("index.html", "template.json", "start.ps1")
   foreach ($file in $files) {
     Write-Host "  Downloading $file..."
     Invoke-WebRequest "$rawBase/$file" -OutFile "$installDir\$file"

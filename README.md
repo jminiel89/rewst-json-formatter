@@ -1,4 +1,4 @@
-# Rewst JSON Formatter
+# Jinja JSON Formatter
 
 ![License](https://img.shields.io/badge/license-MIT-blue) ![UI](https://img.shields.io/badge/UI-Glassmorphism-7c3aed) ![Python](https://img.shields.io/badge/requires-Python%203-yellow)
 
@@ -6,29 +6,29 @@
 
 ## The Problem
 
-When building Rewst workflows, you often need to paste JSON into action fields — copied from API docs, other tools, or a text editor. Rewst's JSON editor is strict and will silently fail or throw an error if your JSON contains any of the following:
+JSON and Jinja templating are used together across many automation platforms, workflow tools, and custom applications. But when you copy JSON from a text editor, API docs, or another tool, it often contains things that break strict JSON parsers:
 
-| Problem | Example | What Rewst does |
-|---------|---------|-----------------|
-| Line comments | `// this is a comment` | Rejects as invalid JSON |
-| Block comments | `/* comment */` | Rejects as invalid JSON |
-| Literal newlines inside strings | A multi-line value | Breaks the JSON structure |
-| Raw control characters | Copy-paste artifacts | Causes silent failures |
-| Jinja expressions with special chars | `{{ CTX.value \| default("x") }}` | Gets corrupted by generic formatters |
+| Problem | Example | What happens |
+|---------|---------|--------------|
+| Line comments | `// this is a comment` | Rejected as invalid JSON |
+| Block comments | `/* comment */` | Rejected as invalid JSON |
+| Literal newlines inside strings | A multi-line value | Breaks JSON structure |
+| Raw control characters | Invisible copy-paste artifacts | Causes silent failures |
+| Jinja expressions with special chars | `{{ value \| default("x") }}` | Gets corrupted by generic formatters |
 
-Fixing these by hand is tedious and error-prone, especially in large payloads with Jinja templating throughout.
+Generic JSON formatters also don't understand Jinja — they mangle `{{ }}` and `{% %}` expressions when trying to escape or reformat the content around them.
 
 ---
 
 ## What This Tool Does
 
-**Rewst JSON Formatter** is a single-page browser tool that takes raw, messy JSON and cleans it up so it can be pasted directly into Rewst without errors. It:
+**Jinja JSON Formatter** is a single-page browser tool that cleans up JSON containing Jinja template expressions so it parses correctly and is easy to read. It:
 
 - **Strips comments** (`//` and `/* */`) automatically
 - **Escapes control characters** — literal newlines, tabs, and other invisible characters inside string values
-- **Protects Jinja expressions** (`{{ }}` and `{% %}`) during processing so they are never corrupted
-- **Highlights the result** with Rewst-aware syntax colors — Rewst action keys appear in purple, Jinja expressions in amber, so the structure is easy to read at a glance
-- **Logs errors** when JSON is too broken to fix automatically, so you have a record of what failed and why
+- **Protects Jinja expressions** (`{{ }}` and `{% %}`) during processing so they are never corrupted — pipes, filters, whitespace control, and nested expressions all come through intact
+- **Highlights the result** with Jinja-aware syntax colors — Jinja expressions appear in amber so they stand out clearly from surrounding JSON content
+- **Logs errors** when JSON is too broken to fix automatically, with a persistent history across sessions
 - **Runs 100% locally** — your JSON never leaves your machine
 
 ---
@@ -50,7 +50,7 @@ irm https://raw.githubusercontent.com/jminiel89/rewst-json-formatter/main/instal
 Both scripts will:
 1. Check that Python 3 is available
 2. Clone the repo via git (or download the files directly if git is not installed)
-3. Print the command to run the tool
+3. Print the exact command to start the tool
 
 > Re-run the same install command at any time to update to the latest version.
 
@@ -60,12 +60,12 @@ Both scripts will:
 
 **Linux / macOS:**
 ```bash
-bash ~/rewst-json-formatter/start.sh
+bash ~/jinja-json-formatter/start.sh
 ```
 
 **Windows (PowerShell):**
 ```powershell
-powershell -File "$env:USERPROFILE\rewst-json-formatter\start.ps1"
+powershell -File "$env:USERPROFILE\jinja-json-formatter\start.ps1"
 ```
 
 Then open **http://localhost:8080** in your browser.
@@ -76,59 +76,49 @@ The server binds to `127.0.0.1` (your machine only) by default. To make it acces
 
 ## How to Use It
 
-1. **Paste** your raw Rewst action JSON into the left panel
-   *(Formatting runs automatically on paste — no button click needed)*
+1. **Paste** your JSON into the left panel
+   *(Formatting triggers automatically on paste — no button click needed)*
 
 2. **Review** the auto-fix summary below the toolbar
    *(Example: "Auto-fixed: Stripped line comments · Fixed literal newlines in strings")*
 
 3. **Check** the right panel for the syntax-highlighted result
-   - Purple keys = Rewst action fields (`name`, `publishResultAs`, `with`, `input`, etc.)
-   - Amber text = Jinja expressions (`{{ }}` / `{% %}`)
-   - Green dot = valid and ready to paste
+   - Blue = JSON keys
+   - Rose = string values
+   - Amber = Jinja expressions (`{{ }}` / `{% %}`)
+   - Green dot = valid, ready to copy
 
-4. **Click Copy Output** and paste into Rewst
+4. **Click Copy Output** and paste wherever you need it
 
 > **Keyboard shortcut:** `Ctrl+Enter` (or `Cmd+Enter` on Mac) triggers formatting from anywhere on the page.
 
 ---
 
-## Template
+## Example Template
 
-Click **Load Template** in the toolbar to load a ready-to-edit skeleton for Rewst HTTP request actions that call Azure AI Foundry (OpenAI-compatible API).
-
-Replace the placeholders before using:
-
-| Placeholder | What to put here |
-|-------------|-----------------|
-| `AZURE_RESOURCE_NAME` | Your Azure OpenAI resource name (from Azure Portal) |
-| `MODEL_NAME` | Your deployment name — e.g., `gpt-4o-mini` |
-| `SYSTEM_PROMPT` | The system instructions for the model |
-| `USER_PROMPT` | The user message or a Jinja expression like `{{ CTX.ticket_body }}` |
-
-The `api-key` field uses `{{ ORG.VARIABLES.azure_foundry_api_key }}` — create this as an org variable in Rewst so the key is never hardcoded in your workflow.
+Click **Load Example** in the toolbar to load a sample JSON payload showing how Jinja variables and filters look inside a real JSON structure. Use it as a reference or starting point.
 
 ---
 
 ## Error Log
 
-If your JSON can't be fixed automatically, the error is recorded in the **Error Log** (click the ⚠ button in the toolbar). The log:
+When JSON can't be fixed automatically, the error is recorded in the **Error Log** (click the ⚠ button in the toolbar). The log:
 
-- Persists across browser sessions (stored in `localStorage`)
+- Persists across browser sessions (stored in browser `localStorage`)
 - Can be exported as a JSON file for sharing or troubleshooting
 - **Does not store your input JSON** — only the error message, timestamp, and what fixes were attempted
 
 ---
 
-## Files in This Repo
+## Files
 
 ```
-index.html                  # The entire app — HTML, CSS, and JavaScript in one file. No build step.
-rewst-http-template.json    # Starter template for Azure AI Foundry HTTP actions in Rewst
-start.sh                    # Starts the local server on Linux / macOS
-start.ps1                   # Starts the local server on Windows
-install.sh                  # One-liner installer for Linux / macOS
-install.ps1                 # One-liner installer for Windows
+index.html      # The entire app — HTML, CSS, and JavaScript in one file. No build step.
+template.json   # Example JSON payload with Jinja expressions
+start.sh        # Starts the local server on Linux / macOS
+start.ps1       # Starts the local server on Windows
+install.sh      # One-liner installer for Linux / macOS
+install.ps1     # One-liner installer for Windows
 ```
 
 ---

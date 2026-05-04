@@ -1,6 +1,6 @@
 #!/bin/bash
 # -----------------------------------------------------------------------------
-# start.sh — Local development server for Rewst JSON Formatter
+# start.sh — Local development server for Jinja JSON Formatter
 #
 # Starts Python's built-in HTTP server from the directory this script lives in.
 # Binds to 127.0.0.1 (localhost only) for security — the tool is intended for
@@ -14,7 +14,7 @@
 # -----------------------------------------------------------------------------
 
 # Change to the directory where this script is located so the server
-# can find index.html and rewst-http-template.json regardless of where
+# can find index.html and template.json regardless of where
 # the script is called from.
 cd "$(dirname "$0")"
 
