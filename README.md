@@ -2,6 +2,8 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue) ![UI](https://img.shields.io/badge/UI-Glassmorphism-7c3aed) ![Python](https://img.shields.io/badge/requires-Python%203-yellow)
 
+![Jinja JSON Formatter screenshot](assets/screenshot.png)
+
 ---
 
 ## The Problem
